@@ -231,8 +231,8 @@ function init3DScene() {
     window.solarSystem3D = new SolarSystem3D(window.threeScene.scene);
     window.solarSystem3D.init();
 
-    // Create 3D rocket
-    window.rocket3D = new Rocket3D(window.threeScene.scene);
+    // Create the Rocinante (Corvette-class frigate)
+    window.rocket3D = new Rocinante3D(window.threeScene.scene);
     window.rocket3D.init();
 
     // Add update callbacks
