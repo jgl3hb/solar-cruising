@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Launch a rocket from Cape Canaveral and explore the solar system at the speed of light">
+    <title>Solar System Explorer 🚀</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <!-- Starfield Background -->
+    <div class="starfield">
+        <div class="stars stars-small"></div>
+        <div class="stars stars-medium"></div>
+        <div class="stars stars-large"></div>
+        <div class="nebula"></div>
+    </div>
+
+    <!-- Launch Pad Scene -->
+    <div id="launch-scene" class="scene active">
+        <div class="cape-canaveral">
+            <div class="ground"></div>
+            <div class="launch-tower">
+                <div class="tower-structure"></div>
+                <div class="tower-arm"></div>
+            </div>
+            <div class="launch-pad"></div>
+
+            <!-- Rocket on Pad -->
+            <div id="rocket-on-pad" class="rocket-container">
+                <div class="rocket">
+                    <div class="rocket-nose"></div>
+                    <div class="rocket-body">
+                        <div class="rocket-window"></div>
+                        <div class="rocket-stripe"></div>
+                    </div>
+                    <div class="rocket-fins">
+                        <div class="fin fin-left"></div>
+                        <div class="fin fin-right"></div>
+                    </div>
+                    <div class="rocket-engine"></div>
+                    <div class="rocket-flame" id="launch-flame"></div>
+                </div>
+            </div>
+
+            <!-- Smoke Effects -->
+            <div class="smoke-container" id="smoke-container"></div>
+        </div>
+
+        <!-- Launch Controls -->
+        <div class="launch-control-panel">
+            <h1 class="mission-title">CAPE CANAVERAL</h1>
+            <h2 class="mission-subtitle">Solar System Explorer Mission</h2>
+            <div class="countdown-display" id="countdown">T-10</div>
+            <button class="launch-button" id="launch-btn">
+                <span class="btn-text">INITIATE LAUNCH</span>
+                <span class="btn-glow"></span>
+            </button>
+            <p class="launch-hint">Press SPACE or click to launch</p>
+        </div>
+    </div>
+
+    <!-- Space Scene -->
+    <div id="space-scene" class="scene">
+        <!-- Solar System Container -->
+        <div class="solar-system-container" id="solar-system">
+            <div class="solar-system">
+                <!-- Sun -->
+                <div class="sun">
+                    <div class="sun-core"></div>
+                    <div class="sun-corona"></div>
+                    <div class="sun-flare"></div>
+                </div>
+
+                <!-- Orbital Paths -->
+                <div class="orbit orbit-mercury"></div>
+                <div class="orbit orbit-venus"></div>
+                <div class="orbit orbit-earth"></div>
+                <div class="orbit orbit-mars"></div>
+                <div class="orbit orbit-asteroid-belt"></div>
+                <div class="orbit orbit-jupiter"></div>
+                <div class="orbit orbit-saturn"></div>
+                <div class="orbit orbit-uranus"></div>
+                <div class="orbit orbit-neptune"></div>
+
+                <!-- Planets -->
+                <div class="planet-orbit mercury-orbit">
+                    <div class="planet mercury" data-planet="mercury">
+                        <div class="planet-body"></div>
+                        <div class="planet-label">Mercury</div>
+                    </div>
+                </div>
+
+                <div class="planet-orbit venus-orbit">
+                    <div class="planet venus" data-planet="venus">
+                        <div class="planet-body"></div>
+                        <div class="planet-label">Venus</div>
+                    </div>
+                </div>
+
+                <div class="planet-orbit earth-orbit">
+                    <div class="planet earth" data-planet="earth">
+                        <div class="planet-body"></div>
+                        <div class="moon-orbit">
+                            <div class="moon"></div>
+                        </div>
+                        <div class="planet-label">Earth</div>
+                    </div>
+                </div>
+
+                <div class="planet-orbit mars-orbit">
+                    <div class="planet mars" data-planet="mars">
+                        <div class="planet-body"></div>
+                        <div class="planet-label">Mars</div>
+                    </div>
+                </div>
+
+                <!-- Asteroid Belt -->
+                <div class="asteroid-belt" id="asteroid-belt"></div>
+
+                <div class="planet-orbit jupiter-orbit">
+                    <div class="planet jupiter" data-planet="jupiter">
+                        <div class="planet-body">
+                            <div class="jupiter-band band-1"></div>
+                            <div class="jupiter-band band-2"></div>
+                            <div class="jupiter-band band-3"></div>
+                            <div class="great-red-spot"></div>
+                        </div>
+                        <div class="planet-label">Jupiter</div>
+                    </div>
+                </div>
+
+                <div class="planet-orbit saturn-orbit">
+                    <div class="planet saturn" data-planet="saturn">
+                        <div class="planet-body"></div>
+                        <div class="saturn-rings"></div>
+                        <div class="planet-label">Saturn</div>
+                    </div>
+                </div>
+
+                <div class="planet-orbit uranus-orbit">
+                    <div class="planet uranus" data-planet="uranus">
+                        <div class="planet-body"></div>
+                        <div class="uranus-rings"></div>
+                        <div class="planet-label">Uranus</div>
+                    </div>
+                </div>
+
+                <div class="planet-orbit neptune-orbit">
+                    <div class="planet neptune" data-planet="neptune">
+                        <div class="planet-body"></div>
+                        <div class="planet-label">Neptune</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rocket in Space -->
+        <div class="space-rocket" id="space-rocket">
+            <div class="rocket">
+                <div class="rocket-nose"></div>
+                <div class="rocket-body">
+                    <div class="rocket-window"></div>
+                    <div class="rocket-stripe"></div>
+                </div>
+                <div class="rocket-fins">
+                    <div class="fin fin-left"></div>
+                    <div class="fin fin-right"></div>
+                </div>
+                <div class="rocket-engine"></div>
+                <div class="rocket-flame active" id="space-flame"></div>
+            </div>
+            <div class="speed-blur" id="speed-blur"></div>
+        </div>
+
+        <!-- HUD Overlay -->
+        <div class="hud" id="hud">
+            <!-- Top Left - Speed -->
+            <div class="hud-panel hud-speed">
+                <div class="panel-header">
+                    <span class="panel-icon">⚡</span>
+                    <span>VELOCITY</span>
+                </div>
+                <div class="speed-value">
+                    <span id="speed-kms">0</span>
+                    <span class="unit">km/s</span>
+                </div>
+                <div class="speed-lightspeed">
+                    <div class="lightspeed-bar">
+                        <div class="lightspeed-fill" id="lightspeed-fill"></div>
+                    </div>
+                    <span id="lightspeed-percent">0%</span>
+                    <span class="label">of c</span>
+                </div>
+            </div>
+
+            <!-- Top Right - Position -->
+            <div class="hud-panel hud-position">
+                <div class="panel-header">
+                    <span class="panel-icon">📍</span>
+                    <span>POSITION</span>
+                </div>
+                <div class="position-value">
+                    <span id="distance-au">0.00</span>
+                    <span class="unit">AU from Sun</span>
+                </div>
+                <div class="nearest-planet">
+                    <span class="label">Nearest:</span>
+                    <span id="nearest-planet">Earth</span>
+                </div>
+            </div>
+
+            <!-- Bottom Left - Throttle -->
+            <div class="hud-panel hud-throttle">
+                <div class="panel-header">
+                    <span class="panel-icon">🔥</span>
+                    <span>THRUST</span>
+                </div>
+                <div class="throttle-gauge">
+                    <div class="throttle-fill" id="throttle-fill"></div>
+                    <span id="throttle-percent">0%</span>
+                </div>
+            </div>
+
+            <!-- Bottom Right - Mission Time -->
+            <div class="hud-panel hud-mission">
+                <div class="panel-header">
+                    <span class="panel-icon">⏱️</span>
+                    <span>MISSION TIME</span>
+                </div>
+                <div class="mission-time" id="mission-time">00:00:00</div>
+            </div>
+
+            <!-- Center - Controls Hint -->
+            <div class="hud-controls" id="controls-hint">
+                <div class="control-item"><kbd>W</kbd><kbd>↑</kbd> Accelerate</div>
+                <div class="control-item"><kbd>S</kbd><kbd>↓</kbd> Decelerate</div>
+                <div class="control-item"><kbd>A</kbd><kbd>←</kbd> Turn Left</div>
+                <div class="control-item"><kbd>D</kbd><kbd>→</kbd> Turn Right</div>
+                <div class="control-item"><kbd>SPACE</kbd> Boost</div>
+                <div class="control-item"><kbd>1-8</kbd> Warp to Planet</div>
+            </div>
+        </div>
+
+        <!-- Planet Info Panel -->
+        <div class="planet-info-panel" id="planet-info">
+            <button class="close-panel" id="close-planet-info">×</button>
+            <div class="planet-info-header">
+                <div class="planet-icon" id="planet-icon"></div>
+                <h2 id="planet-name">Planet</h2>
+            </div>
+            <div class="planet-stats">
+                <div class="stat">
+                    <span class="stat-label">Distance from Sun</span>
+                    <span class="stat-value" id="planet-distance">0 AU</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Diameter</span>
+                    <span class="stat-value" id="planet-diameter">0 km</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Day Length</span>
+                    <span class="stat-value" id="planet-day">0 hours</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Year Length</span>
+                    <span class="stat-value" id="planet-year">0 days</span>
+                </div>
+            </div>
+            <p class="planet-fact" id="planet-fact"></p>
+            <button class="warp-button" id="warp-to-planet">
+                <span>🚀 Warp Here</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="launch-sound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==" type="audio/wav">
+    </audio>
+
+    <!-- Three.js Canvas Container -->
+    <div id="three-container"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; display: none;"></div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="js/SolarSystem.js"></script>
+    <script src="js/Rocket.js"></script>
+    <script src="js/LaunchPad.js"></script>
+    <script src="js/HUD.js"></script>
+    <script src="js/PlanetInfo.js"></script>
+
+    <!-- 3D Scene Scripts -->
+    <script src="js/ThreeScene.js"></script>
+    <script src="js/SolarSystem3D.js"></script>
+    <script src="js/Rocket3D.js"></script>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
