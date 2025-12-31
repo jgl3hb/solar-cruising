@@ -28,8 +28,14 @@ class Rocinante3D {
             right: false,
             boost: false,
             fireRailgun: false,
-            fireMissile: false
+            fireMissile: false,
+            flipAndBurn: false
         };
+
+        // Flip and burn state
+        this.isFlipping = false;
+        this.flipProgress = 0;
+        this.flipStartRotation = 0;
 
         // Weapons systems
         this.railgunCooldown = 0;
@@ -434,6 +440,8 @@ class Rocinante3D {
                 case 'f': this.controls.fireRailgun = true; break;
                 case 'r': this.controls.fireMissile = true; break;
                 case 'h': this.toggleControlsPanel(); break;
+                case 'x': this.initiateFlipAndBurn(); break;
+                case 'q': this.togglePDC(); break;
             }
         });
 
@@ -457,13 +465,101 @@ class Rocinante3D {
         }
     }
 
-    update(delta) {
-        // Rotation
-        if (this.controls.left) {
-            this.rotation += this.rotationSpeed * delta;
+    initiateFlipAndBurn() {
+        if (this.isFlipping || this.speed < 50) return;  // Need some speed to flip
+
+        this.isFlipping = true;
+        this.flipProgress = 0;
+        this.flipStartRotation = this.rotation;
+
+        // Show notification
+        this.showFlipNotification();
+    }
+
+    showFlipNotification() {
+        const notif = document.createElement('div');
+        notif.innerHTML = '🔄 FLIP AND BURN';
+        notif.style.cssText = `
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00aaff;
+            text-shadow: 0 0 30px rgba(0, 170, 255, 0.8);
+            letter-spacing: 5px;
+            pointer-events: none;
+            z-index: 500;
+            animation: flipNotif 1.5s ease-out forwards;
+        `;
+
+        if (!document.getElementById('flip-notif-style')) {
+            const style = document.createElement('style');
+            style.id = 'flip-notif-style';
+            style.textContent = `
+                @keyframes flipNotif {
+                    0% { opacity: 1; transform: translateX(-50%) scale(1); }
+                    50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+                    100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+                }
+            `;
+            document.head.appendChild(style);
         }
-        if (this.controls.right) {
-            this.rotation -= this.rotationSpeed * delta;
+
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 1500);
+    }
+
+    updateFlipAndBurn(delta) {
+        if (!this.isFlipping) return;
+
+        // Flip takes about 1 second
+        this.flipProgress += delta;
+        const flipDuration = 1.0;
+
+        if (this.flipProgress >= flipDuration) {
+            // Flip complete
+            this.isFlipping = false;
+            this.rotation = this.flipStartRotation + Math.PI;
+            // Normalize rotation
+            while (this.rotation > Math.PI) this.rotation -= Math.PI * 2;
+            while (this.rotation < -Math.PI) this.rotation += Math.PI * 2;
+        } else {
+            // Smooth flip animation
+            const t = this.flipProgress / flipDuration;
+            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;  // Ease in-out
+            this.rotation = this.flipStartRotation + (Math.PI * eased);
+        }
+    }
+
+    togglePDC() {
+        // Toggle PDC via combat system if available
+        if (window.combatSystem) {
+            window.combatSystem.togglePDC();
+        }
+
+        const pdcStatus = document.getElementById('pdc-status');
+        if (pdcStatus) {
+            const isActive = pdcStatus.textContent === 'ACTIVE';
+            pdcStatus.textContent = isActive ? 'OFFLINE' : 'ACTIVE';
+            pdcStatus.className = isActive ? 'pdc-inactive' : 'pdc-active';
+        }
+    }
+
+    update(delta) {
+        // Handle flip and burn maneuver
+        this.updateFlipAndBurn(delta);
+
+        // Rotation (skip if flipping)
+        if (!this.isFlipping) {
+            if (this.controls.left) {
+                this.rotation += this.rotationSpeed * delta;
+            }
+            if (this.controls.right) {
+                this.rotation -= this.rotationSpeed * delta;
+            }
         }
 
         // Acceleration - "Flip and burn" style

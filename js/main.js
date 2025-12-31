@@ -235,19 +235,37 @@ function init3DScene() {
     window.rocket3D = new Rocinante3D(window.threeScene.scene);
     window.rocket3D.init();
 
+    // Create asteroid field (The Belt)
+    window.asteroidField = new AsteroidField(window.threeScene.scene);
+    window.asteroidField.init();
+
+    // Create Expanse stations
+    window.spaceStations = new SpaceStations(window.threeScene.scene);
+    window.spaceStations.init();
+
+    // Create combat system
+    window.combatSystem = new CombatSystem(window.rocket3D, window.asteroidField);
+
     // Add update callbacks
     window.threeScene.addUpdateCallback(update3D);
+    window.threeScene.addUpdateCallback((delta, elapsed) => {
+        if (window.asteroidField) window.asteroidField.update(delta);
+        if (window.spaceStations) window.spaceStations.update(delta, elapsed);
+        if (window.combatSystem) window.combatSystem.update(delta);
+    });
 
     // Setup planet warp keys
-    // 1-9 for main planets, 0 for Ceres, E/M/H/S for outer dwarf planets
+    // 1-9 for main planets, 0 for Ceres, T for Tycho, M for Medina
     const numberPlanets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
-    const letterPlanets = { 'c': 'ceres', 'e': 'eris', 'm': 'makemake', 'h': 'haumea', 's': 'sedna' };
+    const letterPlanets = { 'c': 'ceres', 'e': 'eris' };
+    const stationKeys = { 't': 'tycho', 'm': 'medina' };
 
     document.addEventListener('keydown', (e) => {
         if (!window.rocket3D || !window.solarSystem3D) return;
 
         const num = parseInt(e.key);
         let planetName = null;
+        let stationName = null;
 
         // Number keys 1-9 for main planets
         if (num >= 1 && num <= 9) {
@@ -257,9 +275,13 @@ function init3DScene() {
         else if (e.key === '0') {
             planetName = 'ceres';
         }
-        // Letter keys for outer dwarf planets
+        // Letter keys for dwarf planets
         else if (letterPlanets[e.key.toLowerCase()]) {
             planetName = letterPlanets[e.key.toLowerCase()];
+        }
+        // Station keys
+        else if (stationKeys[e.key.toLowerCase()]) {
+            stationName = stationKeys[e.key.toLowerCase()];
         }
 
         if (planetName) {
@@ -267,9 +289,20 @@ function init3DScene() {
             window.rocket3D.warpTo(pos);
             console.log(`🚀 Warped to ${planetName.charAt(0).toUpperCase() + planetName.slice(1)}!`);
         }
+
+        if (stationName && window.spaceStations) {
+            const station = window.spaceStations.getStation(stationName);
+            if (station) {
+                window.rocket3D.warpTo(station.position);
+                console.log(`🛰️ Warped to ${station.userData.name}!`);
+            }
+        }
     });
 
     console.log('✅ 3D scene initialized!');
+    console.log('🚀 Rocinante ready');
+    console.log('☄️ Asteroid field active - destroy them for kills!');
+    console.log('🛰️ Stations: Tycho (T), Medina (M)');
     return true;
 }
 
