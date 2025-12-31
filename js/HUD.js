@@ -200,7 +200,125 @@ class HUD {
             setTimeout(() => achievement.remove(), 500);
         }, 3000);
     }
+
+    showApproachNotification(bodyName, bodyType, distance) {
+        // Don't show if already showing
+        if (this.approachNotification) return;
+
+        const notification = document.createElement('div');
+        notification.id = 'approach-notification';
+        notification.style.cssText = `
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 15px 30px;
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.85), rgba(100, 0, 200, 0.85));
+            border: 1px solid rgba(100, 200, 255, 0.6);
+            border-radius: 12px;
+            font-family: var(--font-display);
+            color: white;
+            text-align: center;
+            z-index: 400;
+            opacity: 0;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 30px rgba(0, 150, 255, 0.4);
+        `;
+
+        const typeEmoji = {
+            'planet': '🪐',
+            'dwarf planet': '🌑',
+            'moon': '🌙',
+            'detached object': '💫'
+        }[bodyType] || '✨';
+
+        notification.innerHTML = `
+            <div style="font-size: 0.7rem; letter-spacing: 3px; margin-bottom: 5px; opacity: 0.8;">APPROACHING</div>
+            <div style="font-size: 1.4rem; font-weight: bold;">${typeEmoji} ${bodyName}</div>
+            <div style="font-size: 0.85rem; opacity: 0.9; margin-top: 5px;">Distance: ${distance.toFixed(1)} units</div>
+        `;
+        document.body.appendChild(notification);
+
+        this.approachNotification = notification;
+
+        requestAnimationFrame(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(-50%) translateY(0)';
+        });
+    }
+
+    hideApproachNotification() {
+        if (this.approachNotification) {
+            this.approachNotification.style.opacity = '0';
+            this.approachNotification.style.transform = 'translateX(-50%) translateY(20px)';
+            setTimeout(() => {
+                this.approachNotification?.remove();
+                this.approachNotification = null;
+            }, 400);
+        }
+    }
+
+    showBodyInfo(bodyData) {
+        // Show detailed info panel for a celestial body
+        const panel = document.createElement('div');
+        panel.id = 'body-info-panel';
+        panel.style.cssText = `
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%) translateX(20px);
+            width: 280px;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(20, 30, 50, 0.95), rgba(10, 15, 30, 0.95));
+            border: 1px solid rgba(100, 150, 255, 0.4);
+            border-radius: 15px;
+            font-family: var(--font-mono);
+            color: white;
+            z-index: 350;
+            opacity: 0;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        `;
+
+        const moons = bodyData.moons ? `<div style="margin-top: 10px; font-size: 0.8rem; color: #88aaff;">Moons: ${bodyData.moons.join(', ')}</div>` : '';
+        const feature = bodyData.feature ? `<div style="margin-top: 8px; font-size: 0.85rem; color: #ffcc66; font-style: italic;">${bodyData.feature}</div>` : '';
+
+        panel.innerHTML = `
+            <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; color: #66ccff;">
+                ${bodyData.name}
+            </div>
+            <div style="font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">
+                ${bodyData.type || 'Planet'}
+            </div>
+            <div style="display: grid; gap: 8px; font-size: 0.9rem;">
+                <div><span style="color: #888;">Size:</span> ${bodyData.size} units</div>
+                <div><span style="color: #888;">Orbit:</span> ${bodyData.distance} units</div>
+                <div><span style="color: #888;">Tilt:</span> ${bodyData.tilt}°</div>
+            </div>
+            ${moons}
+            ${feature}
+        `;
+
+        // Remove any existing panel
+        document.getElementById('body-info-panel')?.remove();
+        document.body.appendChild(panel);
+
+        requestAnimationFrame(() => {
+            panel.style.opacity = '1';
+            panel.style.transform = 'translateY(-50%) translateX(0)';
+        });
+
+        // Auto-hide after 8 seconds
+        setTimeout(() => {
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(-50%) translateX(20px)';
+            setTimeout(() => panel.remove(), 500);
+        }, 8000);
+    }
 }
 
 // Export for use in main.js
 window.HUD = HUD;
+

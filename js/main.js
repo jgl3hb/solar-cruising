@@ -98,6 +98,11 @@ function update(currentTime) {
 }
 
 // 3D Update loop callback
+// Track what body we're currently near
+let currentApproachBody = null;
+const APPROACH_DISTANCE = 150; // Distance to show approach notification
+const INFO_DISTANCE = 80; // Distance to show detailed info
+
 function update3D(delta, elapsed) {
     // Update solar system
     if (window.solarSystem3D) {
@@ -123,9 +128,11 @@ function update3D(delta, elapsed) {
             const distanceFromCenter = Math.sqrt(position.x ** 2 + position.z ** 2);
             const distanceAU = distanceFromCenter / 170; // Earth orbit = 1 AU
 
-            // Find nearest planet
+            // Find nearest planet and check for approach
             let nearestPlanet = 'Sun';
             let nearestDist = distanceFromCenter;
+            let nearestPlanetObj = null;
+            let nearestPlanetName = null;
 
             for (const [name, planet] of Object.entries(window.solarSystem3D.planets)) {
                 const planetPos = planet.getPosition();
@@ -133,7 +140,32 @@ function update3D(delta, elapsed) {
                 if (dist < nearestDist) {
                     nearestDist = dist;
                     nearestPlanet = name.charAt(0).toUpperCase() + name.slice(1);
+                    nearestPlanetObj = planet;
+                    nearestPlanetName = name;
                 }
+            }
+
+            // Approach detection
+            if (nearestPlanetObj && nearestDist < APPROACH_DISTANCE) {
+                if (currentApproachBody !== nearestPlanetName) {
+                    currentApproachBody = nearestPlanetName;
+                    const data = nearestPlanetObj.getData();
+                    window.hud.showApproachNotification(
+                        nearestPlanet,
+                        data.type || 'planet',
+                        nearestDist
+                    );
+
+                    // Show detailed info when very close
+                    if (nearestDist < INFO_DISTANCE) {
+                        setTimeout(() => {
+                            window.hud.showBodyInfo(data);
+                        }, 1500);
+                    }
+                }
+            } else if (nearestDist >= APPROACH_DISTANCE && currentApproachBody) {
+                currentApproachBody = null;
+                window.hud.hideApproachNotification();
             }
 
             window.hud.update({
