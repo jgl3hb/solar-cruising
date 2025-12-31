@@ -150,6 +150,35 @@ class Mars extends BasePlanet {
     getRoughness() {
         return 0.9; // Dusty, rough surface
     }
+
+    addSpecialFeatures() {
+        this.moons = [];
+
+        // Add Phobos
+        const phobos = new Phobos();
+        phobos.init();
+        this.moons.push(phobos);
+        this.group.add(phobos.getGroup());
+
+        // Add Deimos
+        const deimos = new Deimos();
+        deimos.init();
+        this.moons.push(deimos);
+        this.group.add(deimos.getGroup());
+    }
+
+    updateSpecialFeatures(delta, elapsed) {
+        for (const moon of this.moons) {
+            moon.update(delta);
+        }
+    }
+
+    getData() {
+        return {
+            ...super.getData(),
+            moons: ['Phobos', 'Deimos']
+        };
+    }
 }
 
 window.Mars = Mars;

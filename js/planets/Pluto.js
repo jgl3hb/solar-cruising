@@ -69,8 +69,50 @@ class Pluto extends BasePlanet {
 
     getRoughness() { return 0.95; }
 
+    addSpecialFeatures() {
+        this.moons = [];
+
+        // Charon - almost a binary system!
+        const charon = new Charon();
+        charon.init();
+        this.moons.push(charon);
+        this.group.add(charon.getGroup());
+
+        // Smaller moons
+        const nix = new Nix();
+        nix.init();
+        this.moons.push(nix);
+        this.group.add(nix.getGroup());
+
+        const hydra = new Hydra();
+        hydra.init();
+        this.moons.push(hydra);
+        this.group.add(hydra.getGroup());
+
+        const kerberos = new Kerberos();
+        kerberos.init();
+        this.moons.push(kerberos);
+        this.group.add(kerberos.getGroup());
+
+        const styx = new Styx();
+        styx.init();
+        this.moons.push(styx);
+        this.group.add(styx.getGroup());
+    }
+
+    updateSpecialFeatures(delta, elapsed) {
+        for (const moon of this.moons) {
+            moon.update(delta);
+        }
+    }
+
     getData() {
-        return { ...super.getData(), type: 'dwarf planet', feature: 'Tombaugh Regio (Heart)' };
+        return {
+            ...super.getData(),
+            type: 'dwarf planet',
+            feature: 'Tombaugh Regio (Heart)',
+            moons: ['Charon', 'Nix', 'Hydra', 'Kerberos', 'Styx']
+        };
     }
 }
 

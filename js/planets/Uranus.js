@@ -47,6 +47,40 @@ class Uranus extends BasePlanet {
     addSpecialFeatures() {
         this.rings = this.createRingSystem();
         this.group.add(this.rings);
+
+        // Add Uranus's major moons
+        this.moons = [];
+
+        const miranda = new Miranda();
+        miranda.init();
+        this.moons.push(miranda);
+        this.group.add(miranda.getGroup());
+
+        const ariel = new Ariel();
+        ariel.init();
+        this.moons.push(ariel);
+        this.group.add(ariel.getGroup());
+
+        const umbriel = new Umbriel();
+        umbriel.init();
+        this.moons.push(umbriel);
+        this.group.add(umbriel.getGroup());
+
+        const titania = new Titania();
+        titania.init();
+        this.moons.push(titania);
+        this.group.add(titania.getGroup());
+
+        const oberon = new Oberon();
+        oberon.init();
+        this.moons.push(oberon);
+        this.group.add(oberon.getGroup());
+    }
+
+    updateSpecialFeatures(delta, elapsed) {
+        for (const moon of this.moons) {
+            moon.update(delta);
+        }
     }
 
     createRingSystem() {
@@ -75,8 +109,13 @@ class Uranus extends BasePlanet {
     getRoughness() { return 0.6; }
 
     getData() {
-        return { ...super.getData(), hasRings: true };
+        return {
+            ...super.getData(),
+            hasRings: true,
+            moons: ['Miranda', 'Ariel', 'Umbriel', 'Titania', 'Oberon']
+        };
     }
 }
 
 window.Uranus = Uranus;
+

@@ -158,6 +158,44 @@ class Jupiter extends BasePlanet {
     getMetalness() {
         return 0.02;
     }
+
+    addSpecialFeatures() {
+        this.moons = [];
+
+        // Galilean moons - in order from Jupiter
+        const io = new Io();
+        io.init();
+        this.moons.push(io);
+        this.group.add(io.getGroup());
+
+        const europa = new Europa();
+        europa.init();
+        this.moons.push(europa);
+        this.group.add(europa.getGroup());
+
+        const ganymede = new Ganymede();
+        ganymede.init();
+        this.moons.push(ganymede);
+        this.group.add(ganymede.getGroup());
+
+        const callisto = new Callisto();
+        callisto.init();
+        this.moons.push(callisto);
+        this.group.add(callisto.getGroup());
+    }
+
+    updateSpecialFeatures(delta, elapsed) {
+        for (const moon of this.moons) {
+            moon.update(delta);
+        }
+    }
+
+    getData() {
+        return {
+            ...super.getData(),
+            moons: ['Io', 'Europa', 'Ganymede', 'Callisto']
+        };
+    }
 }
 
 window.Jupiter = Jupiter;

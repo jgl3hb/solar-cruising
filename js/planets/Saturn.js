@@ -102,6 +102,45 @@ class Saturn extends BasePlanet {
         // Create Saturn's magnificent ring system
         this.rings = this.createRingSystem();
         this.group.add(this.rings);
+
+        // Add Saturn's major moons
+        this.moons = [];
+
+        const mimas = new Mimas();
+        mimas.init();
+        this.moons.push(mimas);
+        this.group.add(mimas.getGroup());
+
+        const enceladus = new Enceladus();
+        enceladus.init();
+        this.moons.push(enceladus);
+        this.group.add(enceladus.getGroup());
+
+        const tethys = new Tethys();
+        tethys.init();
+        this.moons.push(tethys);
+        this.group.add(tethys.getGroup());
+
+        const dione = new Dione();
+        dione.init();
+        this.moons.push(dione);
+        this.group.add(dione.getGroup());
+
+        const rhea = new Rhea();
+        rhea.init();
+        this.moons.push(rhea);
+        this.group.add(rhea.getGroup());
+
+        const titan = new Titan();
+        titan.init();
+        this.moons.push(titan);
+        this.group.add(titan.getGroup());
+    }
+
+    updateSpecialFeatures(delta, elapsed) {
+        for (const moon of this.moons) {
+            moon.update(delta);
+        }
     }
 
     createRingSystem() {
@@ -191,8 +230,6 @@ class Saturn extends BasePlanet {
         rings.rotation.x = -Math.PI / 2;
         ringGroup.add(rings);
 
-        // Ring shadow on planet could be added here
-
         return ringGroup;
     }
 
@@ -203,9 +240,11 @@ class Saturn extends BasePlanet {
     getData() {
         return {
             ...super.getData(),
-            hasRings: true
+            hasRings: true,
+            moons: ['Mimas', 'Enceladus', 'Tethys', 'Dione', 'Rhea', 'Titan']
         };
     }
 }
 
 window.Saturn = Saturn;
+

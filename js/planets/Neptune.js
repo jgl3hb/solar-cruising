@@ -68,6 +68,28 @@ class Neptune extends BasePlanet {
     }
 
     getRoughness() { return 0.65; }
+
+    addSpecialFeatures() {
+        this.moons = [];
+
+        const triton = new Triton();
+        triton.init();
+        this.moons.push(triton);
+        this.group.add(triton.getGroup());
+    }
+
+    updateSpecialFeatures(delta, elapsed) {
+        for (const moon of this.moons) {
+            moon.update(delta);
+        }
+    }
+
+    getData() {
+        return {
+            ...super.getData(),
+            moons: ['Triton']
+        };
+    }
 }
 
 window.Neptune = Neptune;
