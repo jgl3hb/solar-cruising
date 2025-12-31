@@ -433,6 +433,7 @@ class Rocinante3D {
                 case ' ': this.controls.boost = true; e.preventDefault(); break;
                 case 'f': this.controls.fireRailgun = true; break;
                 case 'r': this.controls.fireMissile = true; break;
+                case 'h': this.toggleControlsPanel(); break;
             }
         });
 
@@ -447,6 +448,13 @@ class Rocinante3D {
                 case 'r': this.controls.fireMissile = false; break;
             }
         });
+    }
+
+    toggleControlsPanel() {
+        const panel = document.getElementById('controls-panel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+        }
     }
 
     update(delta) {
@@ -515,18 +523,29 @@ class Rocinante3D {
         // Create railgun projectile
         const projectile = new THREE.Group();
 
-        // Tungsten rod (kinetic penetrator)
-        const rodGeometry = new THREE.CylinderGeometry(0.3, 0.3, 8, 8);
+        // Tungsten rod (kinetic penetrator) - larger and more visible
+        const rodGeometry = new THREE.CylinderGeometry(0.5, 0.5, 15, 8);
         const rodMaterial = new THREE.MeshBasicMaterial({
-            color: 0xaaaaff,
-            emissive: 0x6666ff
+            color: 0x88aaff
         });
         const rod = new THREE.Mesh(rodGeometry, rodMaterial);
         rod.rotation.x = Math.PI / 2;
         projectile.add(rod);
 
-        // Muzzle flash effect
-        const flash = new THREE.PointLight(0x4444ff, 5, 50);
+        // Glowing trail
+        const trailGeometry = new THREE.CylinderGeometry(0.3, 0.8, 30, 8);
+        const trailMaterial = new THREE.MeshBasicMaterial({
+            color: 0x4466ff,
+            transparent: true,
+            opacity: 0.6
+        });
+        const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+        trail.rotation.x = Math.PI / 2;
+        trail.position.z = 20;
+        projectile.add(trail);
+
+        // Bright muzzle flash
+        const flash = new THREE.PointLight(0x6666ff, 10, 100);
         projectile.add(flash);
 
         // Position at front of ship
@@ -542,19 +561,26 @@ class Rocinante3D {
 
         // Projectile data
         projectile.userData = {
-            velocity: forward.multiplyScalar(2000),  // Extremely fast
-            lifetime: 5,
+            velocity: forward.multiplyScalar(3000),  // Extremely fast
+            lifetime: 3,
             type: 'railgun',
-            flash: flash
+            flash: flash,
+            trail: trail
         };
 
         this.projectiles.push(projectile);
         this.scene.add(projectile);
 
+        // Screen flash effect (DOM)
+        this.createRailgunFlash();
+
+        // Update HUD
+        this.updateWeaponsHUD();
+
         // Screen shake effect
         this.triggerScreenShake();
 
-        console.log('🔫 Railgun fired!');
+        console.log('🔫 RAILGUN FIRED!');
     }
 
     fireMissile() {
@@ -700,16 +726,105 @@ class Rocinante3D {
             let shakeTime = 0;
             const shake = () => {
                 shakeTime += 0.05;
-                camera.position.x = originalPos.x + (Math.random() - 0.5) * 2;
-                camera.position.y = originalPos.y + (Math.random() - 0.5) * 2;
+                camera.position.x = originalPos.x + (Math.random() - 0.5) * 3;
+                camera.position.y = originalPos.y + (Math.random() - 0.5) * 3;
 
-                if (shakeTime < 0.2) {
+                if (shakeTime < 0.25) {
                     requestAnimationFrame(shake);
                 } else {
                     camera.position.copy(originalPos);
                 }
             };
             shake();
+        }
+    }
+
+    createRailgunFlash() {
+        // Create a blue screen flash overlay
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(100, 150, 255, 0.5), rgba(50, 100, 200, 0.3) 50%, transparent 70%);
+            pointer-events: none;
+            z-index: 1000;
+            animation: railgunFlash 0.2s ease-out forwards;
+        `;
+
+        // Add keyframe animation if not exists
+        if (!document.getElementById('railgun-flash-style')) {
+            const style = document.createElement('style');
+            style.id = 'railgun-flash-style';
+            style.textContent = `
+                @keyframes railgunFlash {
+                    0% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(flash);
+
+        // Show "RAILGUN" text
+        const text = document.createElement('div');
+        text.textContent = '🔫 RAILGUN';
+        text.style.cssText = `
+            position: fixed;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #88aaff;
+            text-shadow: 0 0 20px rgba(100, 150, 255, 0.8), 0 0 40px rgba(100, 150, 255, 0.5);
+            letter-spacing: 5px;
+            pointer-events: none;
+            z-index: 1001;
+            animation: railgunText 0.5s ease-out forwards;
+        `;
+
+        if (!document.getElementById('railgun-text-style')) {
+            const textStyle = document.createElement('style');
+            textStyle.id = 'railgun-text-style';
+            textStyle.textContent = `
+                @keyframes railgunText {
+                    0% { opacity: 1; transform: translateX(-50%) scale(1); }
+                    100% { opacity: 0; transform: translateX(-50%) scale(1.2); }
+                }
+            `;
+            document.head.appendChild(textStyle);
+        }
+
+        document.body.appendChild(text);
+
+        // Remove elements after animation
+        setTimeout(() => {
+            flash.remove();
+            text.remove();
+        }, 500);
+    }
+
+    updateWeaponsHUD() {
+        // Update the HUD weapons display
+        const railgunStatus = document.getElementById('railgun-status');
+        const missileCount = document.getElementById('missile-count');
+
+        if (railgunStatus) {
+            railgunStatus.textContent = 'FIRING';
+            railgunStatus.style.color = '#ff4444';
+            setTimeout(() => {
+                railgunStatus.textContent = 'READY';
+                railgunStatus.style.color = '#00ff88';
+            }, this.railgunReloadTime * 1000);
+        }
+
+        if (missileCount) {
+            missileCount.textContent = this.currentMissiles;
         }
     }
 
