@@ -35,7 +35,8 @@ const planetInfo3D = {
     jupiter: { name: 'Jupiter', distance: 5.2, diameter: 142984, day: 9.9, year: 4333 },
     saturn: { name: 'Saturn', distance: 9.58, diameter: 120536, day: 10.7, year: 10759 },
     uranus: { name: 'Uranus', distance: 19.22, diameter: 51118, day: 17.2, year: 30687 },
-    neptune: { name: 'Neptune', distance: 30.05, diameter: 49528, day: 16.1, year: 60190 }
+    neptune: { name: 'Neptune', distance: 30.05, diameter: 49528, day: 16.1, year: 60190 },
+    pluto: { name: 'Pluto', distance: 39.5, diameter: 2377, day: 153.3, year: 90560 }
 };
 
 // Game loop object
@@ -122,8 +123,7 @@ function update3D(delta, elapsed) {
             let nearestDist = distanceFromCenter;
 
             for (const [name, planet] of Object.entries(window.solarSystem3D.planets)) {
-                if (name.includes('_moon')) continue;
-                const planetPos = planet.position;
+                const planetPos = planet.getPosition();
                 const dist = position.distanceTo(planetPos);
                 if (dist < nearestDist) {
                     nearestDist = dist;
@@ -201,11 +201,11 @@ function init3DScene() {
     // Add update callbacks
     window.threeScene.addUpdateCallback(update3D);
 
-    // Setup planet warp keys (1-8)
-    const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+    // Setup planet warp keys (1-9)
+    const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
     document.addEventListener('keydown', (e) => {
         const num = parseInt(e.key);
-        if (num >= 1 && num <= 8 && window.rocket3D && window.solarSystem3D) {
+        if (num >= 1 && num <= 9 && window.rocket3D && window.solarSystem3D) {
             const planetName = planets[num - 1];
             const pos = window.solarSystem3D.getPlanetPosition(planetName);
             window.rocket3D.warpTo(pos);
