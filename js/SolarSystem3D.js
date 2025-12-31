@@ -14,17 +14,22 @@ class SolarSystem3D {
         this.orbits = [];
         this.asteroids = null;
 
-        // Planet classes to instantiate
+        // Planet classes to instantiate (including dwarf planets)
         this.planetClasses = [
             Mercury,
             Venus,
             Earth,
             Mars,
+            Ceres,      // Dwarf planet in asteroid belt
             Jupiter,
             Saturn,
             Uranus,
             Neptune,
-            Pluto
+            Pluto,
+            Eris,       // Trans-Neptunian dwarf planets
+            Makemake,
+            Haumea,
+            Sedna       // Inner Oort Cloud
         ];
 
         this.group = new THREE.Group();

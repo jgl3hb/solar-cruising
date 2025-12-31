@@ -32,11 +32,16 @@ const planetInfo3D = {
     venus: { name: 'Venus', distance: 0.72, diameter: 12104, day: 5832.5, year: 225 },
     earth: { name: 'Earth', distance: 1.0, diameter: 12756, day: 24, year: 365 },
     mars: { name: 'Mars', distance: 1.52, diameter: 6792, day: 24.7, year: 687 },
+    ceres: { name: 'Ceres', distance: 2.77, diameter: 939, day: 9.1, year: 1680 },
     jupiter: { name: 'Jupiter', distance: 5.2, diameter: 142984, day: 9.9, year: 4333 },
     saturn: { name: 'Saturn', distance: 9.58, diameter: 120536, day: 10.7, year: 10759 },
     uranus: { name: 'Uranus', distance: 19.22, diameter: 51118, day: 17.2, year: 30687 },
     neptune: { name: 'Neptune', distance: 30.05, diameter: 49528, day: 16.1, year: 60190 },
-    pluto: { name: 'Pluto', distance: 39.5, diameter: 2377, day: 153.3, year: 90560 }
+    pluto: { name: 'Pluto', distance: 39.5, diameter: 2377, day: 153.3, year: 90560 },
+    eris: { name: 'Eris', distance: 68, diameter: 2326, day: 25.9, year: 203830 },
+    makemake: { name: 'Makemake', distance: 45.8, diameter: 1430, day: 22.5, year: 111845 },
+    haumea: { name: 'Haumea', distance: 43.3, diameter: 1632, day: 3.9, year: 103774 },
+    sedna: { name: 'Sedna', distance: 506, diameter: 995, day: 10, year: 4161300 }
 };
 
 // Game loop object
@@ -201,12 +206,31 @@ function init3DScene() {
     // Add update callbacks
     window.threeScene.addUpdateCallback(update3D);
 
-    // Setup planet warp keys (1-9)
-    const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+    // Setup planet warp keys
+    // 1-9 for main planets, 0 for Ceres, E/M/H/S for outer dwarf planets
+    const numberPlanets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+    const letterPlanets = { 'c': 'ceres', 'e': 'eris', 'm': 'makemake', 'h': 'haumea', 's': 'sedna' };
+
     document.addEventListener('keydown', (e) => {
+        if (!window.rocket3D || !window.solarSystem3D) return;
+
         const num = parseInt(e.key);
-        if (num >= 1 && num <= 9 && window.rocket3D && window.solarSystem3D) {
-            const planetName = planets[num - 1];
+        let planetName = null;
+
+        // Number keys 1-9 for main planets
+        if (num >= 1 && num <= 9) {
+            planetName = numberPlanets[num - 1];
+        }
+        // 0 key for Ceres
+        else if (e.key === '0') {
+            planetName = 'ceres';
+        }
+        // Letter keys for outer dwarf planets
+        else if (letterPlanets[e.key.toLowerCase()]) {
+            planetName = letterPlanets[e.key.toLowerCase()];
+        }
+
+        if (planetName) {
             const pos = window.solarSystem3D.getPlanetPosition(planetName);
             window.rocket3D.warpTo(pos);
             console.log(`🚀 Warped to ${planetName.charAt(0).toUpperCase() + planetName.slice(1)}!`);
