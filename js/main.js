@@ -438,27 +438,49 @@ function hookLaunchPad() {
     }
 }
 
-// Initialization
+// Initialization - skip launch pad, go straight to mode selector
 function init() {
     console.log('🚀 Solar System Explorer initializing...');
     console.log('🎮 3D Mode: ' + (use3D ? 'ENABLED' : 'DISABLED'));
 
-    // Create 2D components (for launch scene)
-    window.solarSystem = new SolarSystem();
-    window.rocket = new Rocket();
-    window.launchPad = new LaunchPad();
+    // Create HUD (needed for both modes)
     window.hud = new HUD();
     window.planetInfo = new PlanetInfo();
 
-    // Hook launch pad for 3D transition
-    hookLaunchPad();
+    // Skip launch pad - show mode selector immediately
+    if (use3D) {
+        // Hide launch pad elements
+        const launchPadElement = document.querySelector('.launch-pad');
+        const launchScene = document.getElementById('launch-scene');
+        if (launchPadElement) launchPadElement.style.display = 'none';
+        if (launchScene) launchScene.style.display = 'none';
 
-    console.log('✅ All systems initialized!');
-    console.log('📍 Location: Cape Canaveral, Florida');
-    console.log('🎯 Mission: Explore the Solar System in 3D!');
-    console.log('⚡ Max Speed: 299,792 km/s (Speed of Light)');
-    console.log('');
-    console.log('Press SPACE or click "INITIATE LAUNCH" to begin!');
+        // Show mode selector
+        const modeSelector = new ModeSelector();
+        modeSelector.show((selectedMode) => {
+            gameMode = selectedMode;
+
+            // Initialize 3D immediately
+            const container = document.getElementById('three-container');
+            if (container) container.style.display = 'block';
+
+            const spaceScene = document.getElementById('space-scene');
+            if (spaceScene) spaceScene.classList.add('active');
+
+            if (init3DScene()) {
+                window.gameLoop.start();
+                console.log('🚀 Game started in', selectedMode.toUpperCase(), 'mode!');
+            }
+        });
+    } else {
+        // Fallback to 2D mode (legacy)
+        window.solarSystem = new SolarSystem();
+        window.rocket = new Rocket();
+        window.launchPad = new LaunchPad();
+        hookLaunchPad();
+    }
+
+    console.log('✅ Systems initializing...');
 }
 
 // Wait for DOM to be ready
