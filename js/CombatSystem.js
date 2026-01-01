@@ -4,9 +4,10 @@
  */
 
 class CombatSystem {
-    constructor(rocinante, asteroidField) {
+    constructor(rocinante, asteroidField, enemyShips) {
         this.rocinante = rocinante;
         this.asteroidField = asteroidField;
+        this.enemyShips = enemyShips;
 
         // Ship status
         this.maxHull = 100;
@@ -26,7 +27,7 @@ class CombatSystem {
         // Kill count
         this.kills = {
             asteroids: 0,
-            missiles: 0
+            ships: 0
         };
 
         // HUD elements
@@ -195,44 +196,185 @@ class CombatSystem {
     }
 
     checkProjectileHits() {
-        if (!this.asteroidField) return;
-
-        // Check railgun projectiles
+        // Check railgun projectiles against asteroids AND enemies
         for (let i = this.rocinante.projectiles.length - 1; i >= 0; i--) {
             const proj = this.rocinante.projectiles[i];
-            const result = this.asteroidField.checkCollision(proj.position, 'railgun');
+            let hit = false;
 
-            if (result.hit) {
-                // Remove projectile
+            // Check asteroids
+            if (this.asteroidField) {
+                const result = this.asteroidField.checkCollision(proj.position, 'railgun');
+                if (result.hit) {
+                    hit = true;
+                    if (result.destroyed) {
+                        this.kills.asteroids++;
+                        this.showKillNotification('ASTEROID DESTROYED');
+                    }
+                }
+            }
+
+            // Check enemy ships
+            if (!hit && this.enemyShips) {
+                const result = this.enemyShips.checkCollision(proj.position, 'railgun');
+                if (result.hit) {
+                    hit = true;
+                    if (result.destroyed) {
+                        this.kills.ships++;
+                        this.showKillNotification(`${result.enemy.config.name.toUpperCase()} DESTROYED`);
+                    } else {
+                        this.showHitNotification('HIT');
+                    }
+                }
+            }
+
+            if (hit) {
                 this.rocinante.scene.remove(proj);
                 this.rocinante.projectiles.splice(i, 1);
-
-                if (result.destroyed) {
-                    this.kills.asteroids++;
-                    this.showKillNotification('ASTEROID DESTROYED');
-                }
             }
         }
 
-        // Check missiles/torpedoes
+        // Check missiles/torpedoes (NUKES!)
         for (let i = this.rocinante.missiles.length - 1; i >= 0; i--) {
             const missile = this.rocinante.missiles[i];
-            const result = this.asteroidField.checkCollision(missile.position, 'missile');
+            let hit = false;
+            let hitPos = null;
 
-            if (result.hit) {
-                // Create explosion at impact point
-                this.rocinante.createExplosion(result.position);
-
-                // Remove missile
-                this.rocinante.scene.remove(missile);
-                this.rocinante.missiles.splice(i, 1);
-
-                if (result.destroyed) {
-                    this.kills.asteroids++;
-                    this.showKillNotification('ASTEROID OBLITERATED');
+            // Check asteroids
+            if (this.asteroidField) {
+                const result = this.asteroidField.checkCollision(missile.position, 'missile');
+                if (result.hit) {
+                    hit = true;
+                    hitPos = result.position;
+                    if (result.destroyed) {
+                        this.kills.asteroids++;
+                        this.showKillNotification('☢️ NUCLEAR STRIKE - ASTEROID VAPORIZED');
+                    }
                 }
             }
+
+            // Check enemy ships
+            if (!hit && this.enemyShips) {
+                const result = this.enemyShips.checkCollision(missile.position, 'missile');
+                if (result.hit) {
+                    hit = true;
+                    hitPos = result.position;
+                    if (result.destroyed) {
+                        this.kills.ships++;
+                        this.showKillNotification(`☢️ NUCLEAR STRIKE - ${result.enemy.config.name.toUpperCase()} OBLITERATED`);
+                    } else {
+                        this.showKillNotification('☢️ DIRECT HIT');
+                    }
+                }
+            }
+
+            if (hit) {
+                // Create nuclear explosion at impact point
+                this.createNuclearExplosion(hitPos || missile.position);
+                this.rocinante.scene.remove(missile);
+                this.rocinante.missiles.splice(i, 1);
+            }
         }
+    }
+
+    createNuclearExplosion(position) {
+        // Massive nuclear explosion effect
+        const explosion = new THREE.Group();
+
+        // Bright white flash
+        const flash = new THREE.PointLight(0xffffaa, 20, 500);
+        flash.position.copy(position);
+        explosion.add(flash);
+
+        // Initial fireball
+        const fireballGeom = new THREE.SphereGeometry(5, 32, 32);
+        const fireballMat = new THREE.MeshBasicMaterial({
+            color: 0xffff88,
+            transparent: true,
+            opacity: 1
+        });
+        const fireball = new THREE.Mesh(fireballGeom, fireballMat);
+        fireball.position.copy(position);
+        explosion.add(fireball);
+
+        // Shockwave ring
+        const ringGeom = new THREE.RingGeometry(0.1, 3, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffaa00,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.position.copy(position);
+        ring.lookAt(window.threeScene?.camera?.position || new THREE.Vector3(0, 100, 0));
+        explosion.add(ring);
+
+        this.rocinante.scene.add(explosion);
+
+        // Animate
+        let scale = 1;
+        let ringScale = 1;
+        const expandExplosion = () => {
+            scale += 2;
+            ringScale += 4;
+
+            fireball.scale.setScalar(scale);
+            ring.scale.setScalar(ringScale);
+
+            fireballMat.opacity -= 0.015;
+            ringMat.opacity -= 0.02;
+            flash.intensity *= 0.92;
+
+            // Color shift to orange/red
+            const hue = Math.max(0, 0.12 - scale * 0.002);
+            fireballMat.color.setHSL(hue, 1, 0.5);
+
+            if (fireballMat.opacity > 0) {
+                requestAnimationFrame(expandExplosion);
+            } else {
+                this.rocinante.scene.remove(explosion);
+            }
+        };
+        expandExplosion();
+
+        // Big screen shake
+        this.rocinante.triggerScreenShake();
+
+        console.log('☢️ NUCLEAR DETONATION!');
+    }
+
+    showHitNotification(message) {
+        const notif = document.createElement('div');
+        notif.textContent = `🎯 ${message}`;
+        notif.style.cssText = `
+            position: fixed;
+            top: 32%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: #ffaa00;
+            text-shadow: 0 0 15px rgba(255, 170, 0, 0.8);
+            letter-spacing: 2px;
+            pointer-events: none;
+            z-index: 500;
+            animation: hitNotif 0.5s ease-out forwards;
+        `;
+
+        if (!document.getElementById('hit-notif-style')) {
+            const style = document.createElement('style');
+            style.id = 'hit-notif-style';
+            style.textContent = `
+                @keyframes hitNotif {
+                    0% { opacity: 1; transform: translateX(-50%) scale(1); }
+                    100% { opacity: 0; transform: translateX(-50%) scale(1.1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 500);
     }
 
     updatePDC(delta) {

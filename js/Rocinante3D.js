@@ -162,6 +162,9 @@ class Rocinante3D {
         // Running lights
         this.createRunningLights(shipGroup);
 
+        // Scale down the ship (Corvette is smaller than it was)
+        shipGroup.scale.setScalar(0.4);
+
         this.mesh = shipGroup;
         this.group.add(shipGroup);
     }

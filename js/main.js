@@ -243,14 +243,28 @@ function init3DScene() {
     window.spaceStations = new SpaceStations(window.threeScene.scene);
     window.spaceStations.init();
 
-    // Create combat system
-    window.combatSystem = new CombatSystem(window.rocket3D, window.asteroidField);
+    // Create enemy ships
+    window.enemyShips = new EnemyShips(window.threeScene.scene, window.rocket3D);
+    window.enemyShips.init();
+
+    // Create targeting system
+    window.targetingSystem = new TargetingSystem(
+        window.threeScene.scene,
+        window.rocket3D,
+        window.enemyShips,
+        window.asteroidField
+    );
+
+    // Create combat system (now with enemy ships)
+    window.combatSystem = new CombatSystem(window.rocket3D, window.asteroidField, window.enemyShips);
 
     // Add update callbacks
     window.threeScene.addUpdateCallback(update3D);
     window.threeScene.addUpdateCallback((delta, elapsed) => {
         if (window.asteroidField) window.asteroidField.update(delta);
         if (window.spaceStations) window.spaceStations.update(delta, elapsed);
+        if (window.enemyShips) window.enemyShips.update(delta);
+        if (window.targetingSystem) window.targetingSystem.update(delta);
         if (window.combatSystem) window.combatSystem.update(delta);
     });
 
