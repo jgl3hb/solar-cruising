@@ -261,6 +261,39 @@ class SolarSystem3D {
     getPlanetNames() {
         return this.planetInstances.map(p => p.name);
     }
+
+    // Check for collision with any planet or the sun
+    checkCollision(position) {
+        // Check sun collision first
+        const sunDist = position.distanceTo(new THREE.Vector3(0, 0, 0));
+        if (sunDist < 65) {  // Sun radius is 60
+            return {
+                collision: true,
+                body: 'Sun',
+                type: 'star',
+                fatal: true
+            };
+        }
+
+        // Check all planets
+        for (const planet of this.planetInstances) {
+            const planetPos = planet.getPosition();
+            const distance = position.distanceTo(planetPos);
+            const planetRadius = planet.size * 1.2;  // Slight buffer
+
+            if (distance < planetRadius) {
+                return {
+                    collision: true,
+                    body: planet.name,
+                    type: 'planet',
+                    fatal: true,
+                    position: planetPos
+                };
+            }
+        }
+
+        return { collision: false };
+    }
 }
 
 // Make available globally

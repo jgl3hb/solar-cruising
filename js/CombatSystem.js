@@ -186,6 +186,9 @@ class CombatSystem {
         // Check for projectile hits on asteroids
         this.checkProjectileHits();
 
+        // Check for planet collisions
+        this.checkPlanetCollision();
+
         // PDC auto-targeting (if we add enemy missiles later)
         if (this.pdcActive && this.pdcCooldown <= 0) {
             this.updatePDC(delta);
@@ -193,6 +196,147 @@ class CombatSystem {
 
         // Update HUD
         this.updateHUD();
+    }
+
+    checkPlanetCollision() {
+        if (!window.solarSystem3D || !this.rocinante) return;
+
+        const shipPos = this.rocinante.getPosition();
+        const result = window.solarSystem3D.checkCollision(shipPos);
+
+        if (result.collision) {
+            this.crashIntoPlanet(result);
+        }
+    }
+
+    crashIntoPlanet(collisionInfo) {
+        console.log(`💥 CRASHED INTO ${collisionInfo.body.toUpperCase()}!`);
+
+        // Massive explosion
+        this.createCrashExplosion(this.rocinante.getPosition(), collisionInfo.body);
+
+        // Destroy ship
+        this.currentHull = 0;
+
+        // Game over screen
+        this.showCrashScreen(collisionInfo.body);
+    }
+
+    createCrashExplosion(position, bodyName) {
+        const isSun = bodyName === 'Sun';
+
+        // Huge flash
+        const flashColor = isSun ? 0xffff00 : 0xff6600;
+        const flash = new THREE.PointLight(flashColor, 30, 500);
+        flash.position.copy(position);
+        this.rocinante.scene.add(flash);
+
+        // Many particles
+        const particleCount = 100;
+        for (let i = 0; i < particleCount; i++) {
+            const size = 1 + Math.random() * 3;
+            const geometry = new THREE.SphereGeometry(size, 4, 4);
+            const hue = isSun ? 0.12 + Math.random() * 0.05 : 0.05 + Math.random() * 0.08;
+            const material = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL(hue, 1, 0.5),
+                transparent: true,
+                opacity: 1
+            });
+            const particle = new THREE.Mesh(geometry, material);
+            particle.position.copy(position);
+
+            particle.userData = {
+                velocity: new THREE.Vector3(
+                    (Math.random() - 0.5) * 50,
+                    (Math.random() - 0.5) * 50,
+                    (Math.random() - 0.5) * 50
+                ),
+                life: 1
+            };
+
+            this.rocinante.scene.add(particle);
+
+            // Animate
+            const animate = () => {
+                particle.userData.life -= 0.015;
+                if (particle.userData.life > 0) {
+                    particle.position.add(particle.userData.velocity.clone().multiplyScalar(0.016));
+                    particle.userData.velocity.multiplyScalar(0.98);
+                    particle.material.opacity = particle.userData.life;
+                    requestAnimationFrame(animate);
+                } else {
+                    this.rocinante.scene.remove(particle);
+                }
+            };
+            animate();
+        }
+
+        // Fade flash
+        let intensity = 30;
+        const fadeFlash = () => {
+            intensity *= 0.9;
+            flash.intensity = intensity;
+            if (intensity > 0.1) {
+                requestAnimationFrame(fadeFlash);
+            } else {
+                this.rocinante.scene.remove(flash);
+            }
+        };
+        fadeFlash();
+
+        // Big screen shake
+        this.rocinante.triggerScreenShake();
+    }
+
+    showCrashScreen(bodyName) {
+        // Screen flash
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: ${bodyName === 'Sun' ? 'rgba(255,255,200,0.8)' : 'rgba(255,100,0,0.6)'};
+            pointer-events: none; z-index: 999;
+            animation: crashFlash 0.5s ease-out forwards;
+        `;
+
+        if (!document.getElementById('crash-flash-style')) {
+            const style = document.createElement('style');
+            style.id = 'crash-flash-style';
+            style.textContent = `
+                @keyframes crashFlash {
+                    0% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 500);
+
+        // Game over message
+        const message = bodyName === 'Sun'
+            ? 'VAPORIZED BY THE SUN ☀️'
+            : `CRASHED INTO ${bodyName.toUpperCase()} 💥`;
+
+        const gameOver = document.createElement('div');
+        gameOver.innerHTML = `
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #ff4444; 
+                        text-shadow: 0 0 30px rgba(255,0,0,0.8); margin-bottom: 20px;">
+                ${message}
+            </div>
+            <div style="font-family: 'Space Mono', monospace; color: #888; margin-bottom: 10px;">
+                Kills: ${this.kills.asteroids + this.kills.ships}
+            </div>
+            <button onclick="location.reload()" style="
+                margin-top: 30px; padding: 15px 40px; font-family: 'Orbitron', sans-serif;
+                background: #ff4444; color: white; border: none; border-radius: 8px;
+                cursor: pointer; font-size: 1rem;
+            ">TRY AGAIN</button>
+        `;
+        gameOver.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; z-index: 2000;
+        `;
+        document.body.appendChild(gameOver);
     }
 
     checkProjectileHits() {

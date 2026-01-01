@@ -178,6 +178,11 @@ function update3D(delta, elapsed) {
             });
 
             checkAchievements(speedPercent);
+
+            // Check for planet collision (Explorer mode - no combat system)
+            if (gameMode === 'explorer') {
+                checkPlanetCollisionExplorer(position);
+            }
         }
     }
 }
@@ -209,6 +214,68 @@ function checkAchievements(speedPercent) {
             "You've reached the cosmic speed limit!"
         );
     }
+}
+
+// Check planet collision for Explorer mode
+let explorerCrashed = false;
+function checkPlanetCollisionExplorer(position) {
+    if (explorerCrashed || !window.solarSystem3D) return;
+
+    const result = window.solarSystem3D.checkCollision(position);
+    if (result.collision) {
+        explorerCrashed = true;
+        showExplorerCrashScreen(result.body);
+    }
+}
+
+function showExplorerCrashScreen(bodyName) {
+    // Screen flash
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: ${bodyName === 'Sun' ? 'rgba(255,255,200,0.8)' : 'rgba(255,100,0,0.6)'};
+        pointer-events: none; z-index: 999;
+        animation: explorerCrashFlash 0.5s ease-out forwards;
+    `;
+
+    if (!document.getElementById('explorer-crash-style')) {
+        const style = document.createElement('style');
+        style.id = 'explorer-crash-style';
+        style.textContent = `
+            @keyframes explorerCrashFlash {
+                0% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 500);
+
+    const message = bodyName === 'Sun'
+        ? 'VAPORIZED BY THE SUN ☀️'
+        : `CRASHED INTO ${bodyName.toUpperCase()} 💥`;
+
+    const gameOver = document.createElement('div');
+    gameOver.innerHTML = `
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #ff4444; 
+                    text-shadow: 0 0 30px rgba(255,0,0,0.8); margin-bottom: 20px;">
+            ${message}
+        </div>
+        <div style="font-family: 'Space Mono', monospace; color: #888; margin-bottom: 10px;">
+            Space exploration is dangerous!
+        </div>
+        <button onclick="location.reload()" style="
+            margin-top: 30px; padding: 15px 40px; font-family: 'Orbitron', sans-serif;
+            background: #00aaff; color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 1rem;
+        ">TRY AGAIN</button>
+    `;
+    gameOver.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        text-align: center; z-index: 2000;
+    `;
+    document.body.appendChild(gameOver);
 }
 
 // Initialize 3D scene (called after launch)
