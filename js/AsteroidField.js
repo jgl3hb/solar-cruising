@@ -55,8 +55,8 @@ class AsteroidField {
                 Math.sin(angle) * radius
             );
 
-            // Random size (small background asteroids)
-            const scale = 0.5 + Math.random() * 2;
+            // Random size (tiny background asteroids)
+            const scale = 0.05 + Math.random() * 0.2;
             asteroid.scale.setScalar(scale);
 
             // Random rotation
@@ -135,7 +135,7 @@ class AsteroidField {
 
     createShootableAsteroid(texture) {
         // Create irregular asteroid geometry
-        const geometry = new THREE.IcosahedronGeometry(5, 1);
+        const geometry = new THREE.IcosahedronGeometry(1, 1);
 
         // Deform vertices for irregular shape
         const positions = geometry.attributes.position;
@@ -168,8 +168,8 @@ class AsteroidField {
             Math.sin(angle) * radius
         );
 
-        // Random size
-        const scale = 2 + Math.random() * 8;
+        // Random size (small asteroids)
+        const scale = 0.3 + Math.random() * 1.5;
         mesh.scale.setScalar(scale);
 
         // Random rotation
@@ -233,7 +233,7 @@ class AsteroidField {
             if (asteroid.destroyed) continue;
 
             const distance = projectilePosition.distanceTo(asteroid.mesh.position);
-            const asteroidRadius = asteroid.size * 5;
+            const asteroidRadius = asteroid.size * 1;
 
             if (distance < asteroidRadius + hitRadius) {
                 asteroid.health -= damage;
