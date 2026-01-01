@@ -8,6 +8,7 @@
 let isRunning = false;
 let lastTime = 0;
 let use3D = true; // Enable 3D mode
+let gameMode = 'explorer'; // 'explorer' or 'expanse'
 let achievements = {
     firstLight: false,
     halfLight: false,
@@ -231,48 +232,67 @@ function init3DScene() {
     window.solarSystem3D = new SolarSystem3D(window.threeScene.scene);
     window.solarSystem3D.init();
 
-    // Create the Rocinante (Corvette-class frigate)
-    window.rocket3D = new Rocinante3D(window.threeScene.scene);
-    window.rocket3D.init();
+    // Create ship based on mode
+    if (gameMode === 'expanse') {
+        // Create the Rocinante (Corvette-class frigate)
+        window.rocket3D = new Rocinante3D(window.threeScene.scene);
+        window.rocket3D.init();
 
-    // Create asteroid field (The Belt)
-    window.asteroidField = new AsteroidField(window.threeScene.scene);
-    window.asteroidField.init();
+        // Create asteroid field (The Belt)
+        window.asteroidField = new AsteroidField(window.threeScene.scene);
+        window.asteroidField.init();
 
-    // Create Expanse stations
-    window.spaceStations = new SpaceStations(window.threeScene.scene);
-    window.spaceStations.init();
+        // Create Expanse stations
+        window.spaceStations = new SpaceStations(window.threeScene.scene);
+        window.spaceStations.init();
 
-    // Create enemy ships
-    window.enemyShips = new EnemyShips(window.threeScene.scene, window.rocket3D);
-    window.enemyShips.init();
+        // Create enemy ships
+        window.enemyShips = new EnemyShips(window.threeScene.scene, window.rocket3D);
+        window.enemyShips.init();
 
-    // Create targeting system
-    window.targetingSystem = new TargetingSystem(
-        window.threeScene.scene,
-        window.rocket3D,
-        window.enemyShips,
-        window.asteroidField
-    );
+        // Create targeting system
+        window.targetingSystem = new TargetingSystem(
+            window.threeScene.scene,
+            window.rocket3D,
+            window.enemyShips,
+            window.asteroidField
+        );
 
-    // Create combat system (now with enemy ships)
-    window.combatSystem = new CombatSystem(window.rocket3D, window.asteroidField, window.enemyShips);
+        // Create combat system
+        window.combatSystem = new CombatSystem(window.rocket3D, window.asteroidField, window.enemyShips);
 
-    // Add update callbacks
+        // Add Expanse update callbacks
+        window.threeScene.addUpdateCallback((delta, elapsed) => {
+            if (window.asteroidField) window.asteroidField.update(delta);
+            if (window.spaceStations) window.spaceStations.update(delta, elapsed);
+            if (window.enemyShips) window.enemyShips.update(delta);
+            if (window.targetingSystem) window.targetingSystem.update(delta);
+            if (window.combatSystem) window.combatSystem.update(delta);
+        });
+
+        console.log('⚔️ EXPANSE COMBAT MODE');
+        console.log('🚀 MCRN Rocinante ready');
+        console.log('☄️ Asteroid field and enemies active');
+    } else {
+        // Explorer mode - use simple Rocket3D
+        window.rocket3D = new Rocket3D(window.threeScene.scene);
+        window.rocket3D.init();
+
+        // Hide combat HUD elements
+        document.getElementById('weapons-panel')?.style.setProperty('display', 'none');
+        document.getElementById('controls-panel')?.style.setProperty('display', 'none');
+
+        console.log('🌍 EXPLORER MODE');
+        console.log('🚀 Spacecraft ready for peaceful exploration');
+    }
+
+    // Add base update callbacks
     window.threeScene.addUpdateCallback(update3D);
-    window.threeScene.addUpdateCallback((delta, elapsed) => {
-        if (window.asteroidField) window.asteroidField.update(delta);
-        if (window.spaceStations) window.spaceStations.update(delta, elapsed);
-        if (window.enemyShips) window.enemyShips.update(delta);
-        if (window.targetingSystem) window.targetingSystem.update(delta);
-        if (window.combatSystem) window.combatSystem.update(delta);
-    });
 
-    // Setup planet warp keys
-    // 1-9 for main planets, 0 for Ceres, T for Tycho, M for Medina
+    // Setup planet warp keys (both modes)
     const numberPlanets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
     const letterPlanets = { 'c': 'ceres', 'e': 'eris' };
-    const stationKeys = { 't': 'tycho', 'm': 'medina' };
+    const stationKeys = gameMode === 'expanse' ? { 't': 'tycho', 'm': 'medina' } : {};
 
     document.addEventListener('keydown', (e) => {
         if (!window.rocket3D || !window.solarSystem3D) return;
@@ -293,7 +313,7 @@ function init3DScene() {
         else if (letterPlanets[e.key.toLowerCase()]) {
             planetName = letterPlanets[e.key.toLowerCase()];
         }
-        // Station keys
+        // Station keys (Expanse mode only)
         else if (stationKeys[e.key.toLowerCase()]) {
             stationName = stationKeys[e.key.toLowerCase()];
         }
@@ -314,9 +334,6 @@ function init3DScene() {
     });
 
     console.log('✅ 3D scene initialized!');
-    console.log('🚀 Rocinante ready');
-    console.log('☄️ Asteroid field active - destroy them for kills!');
-    console.log('🛰️ Stations: Tycho (T), Medina (M)');
     return true;
 }
 
@@ -326,24 +343,30 @@ function hookLaunchPad() {
 
     if (window.launchPad && use3D) {
         window.launchPad.transitionToSpace = function () {
-            // Hide 2D space scene elements
-            const spaceScene = document.getElementById('space-scene');
-            const solarSystem = document.getElementById('solar-system');
-            const spaceRocket = document.getElementById('space-rocket');
+            // Show mode selector first
+            const modeSelector = new ModeSelector();
+            modeSelector.show((selectedMode) => {
+                gameMode = selectedMode;
 
-            if (solarSystem) solarSystem.style.display = 'none';
-            if (spaceRocket) spaceRocket.style.display = 'none';
+                // Hide 2D space scene elements
+                const spaceScene = document.getElementById('space-scene');
+                const solarSystem = document.getElementById('solar-system');
+                const spaceRocket = document.getElementById('space-rocket');
 
-            // Initialize 3D
-            if (init3DScene()) {
-                // Show space scene (for HUD)
-                if (spaceScene) {
-                    spaceScene.classList.add('active');
+                if (solarSystem) solarSystem.style.display = 'none';
+                if (spaceRocket) spaceRocket.style.display = 'none';
+
+                // Initialize 3D
+                if (init3DScene()) {
+                    // Show space scene (for HUD)
+                    if (spaceScene) {
+                        spaceScene.classList.add('active');
+                    }
+
+                    // Start 3D game loop
+                    window.gameLoop.start();
                 }
-
-                // Start 3D game loop
-                window.gameLoop.start();
-            }
+            });
         };
     }
 }
