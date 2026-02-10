@@ -25,8 +25,8 @@ class Rocket {
 
         // Input state
         this.keys = {
-            up: false,
-            down: false,
+            accelerate: false,
+            brake: false,
             left: false,
             right: false,
             boost: false
@@ -45,21 +45,19 @@ class Rocket {
             if (!this.isLaunched) return;
 
             switch (e.key.toLowerCase()) {
-                case 'w':
-                case 'arrowup':
-                    this.keys.up = true;
-                    break;
-                case 's':
-                case 'arrowdown':
-                    this.keys.down = true;
-                    break;
-                case 'a':
                 case 'arrowleft':
                     this.keys.left = true;
+                    e.preventDefault();
                     break;
-                case 'd':
                 case 'arrowright':
                     this.keys.right = true;
+                    e.preventDefault();
+                    break;
+                case 'w':
+                    this.keys.accelerate = true;
+                    break;
+                case 's':
+                    this.keys.brake = true;
                     break;
                 case ' ':
                     this.keys.boost = true;
@@ -87,21 +85,17 @@ class Rocket {
 
         document.addEventListener('keyup', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w':
-                case 'arrowup':
-                    this.keys.up = false;
-                    break;
-                case 's':
-                case 'arrowdown':
-                    this.keys.down = false;
-                    break;
-                case 'a':
                 case 'arrowleft':
                     this.keys.left = false;
                     break;
-                case 'd':
                 case 'arrowright':
                     this.keys.right = false;
+                    break;
+                case 'w':
+                    this.keys.accelerate = false;
+                    break;
+                case 's':
+                    this.keys.brake = false;
                     break;
                 case ' ':
                     this.keys.boost = false;
@@ -194,10 +188,10 @@ class Rocket {
         }
 
         // Handle thrust
-        if (this.keys.up || this.keys.boost) {
+        if (this.keys.accelerate || this.keys.boost) {
             const boostMultiplier = this.keys.boost ? 3 : 1;
             this.throttle = Math.min(100, this.throttle + 50 * dt * boostMultiplier);
-        } else if (this.keys.down) {
+        } else if (this.keys.brake) {
             this.throttle = Math.max(0, this.throttle - 80 * dt);
         } else {
             // Gradual throttle decrease when no input
