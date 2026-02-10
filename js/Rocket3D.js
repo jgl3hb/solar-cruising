@@ -1,6 +1,6 @@
 /**
  * Rocket3D.js - 3D Rocket with particle thrust
- * WASD controls, camera follow, particle engine effects
+ * 3D flight: yaw steering + vertical ascent/descent + throttle/brake
  */
 
 class Rocket3D {
@@ -20,13 +20,19 @@ class Rocket3D {
         this.acceleration = 150;
         this.friction = 0.985;
         this.rotationSpeed = 2;
+        this.verticalSpeed = 0;
+        this.maxVerticalSpeed = 220;
+        this.verticalAcceleration = 220;
+        this.verticalFriction = 0.93;
 
         // Controls state
         this.controls = {
-            forward: false,
-            backward: false,
+            accelerate: false,
+            brake: false,
             left: false,
             right: false,
+            ascend: false,
+            descend: false,
             boost: false
         };
 
@@ -195,21 +201,58 @@ class Rocket3D {
     setupControls() {
         document.addEventListener('keydown', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w': case 'arrowup': this.controls.forward = true; break;
-                case 's': case 'arrowdown': this.controls.backward = true; break;
-                case 'a': case 'arrowleft': this.controls.left = true; break;
-                case 'd': case 'arrowright': this.controls.right = true; break;
-                case ' ': this.controls.boost = true; e.preventDefault(); break;
+                case 'arrowleft':
+                    this.controls.left = true;
+                    e.preventDefault();
+                    break;
+                case 'arrowright':
+                    this.controls.right = true;
+                    e.preventDefault();
+                    break;
+                case 'arrowup':
+                    this.controls.ascend = true;
+                    e.preventDefault();
+                    break;
+                case 'arrowdown':
+                    this.controls.descend = true;
+                    e.preventDefault();
+                    break;
+                case 'w':
+                    this.controls.accelerate = true;
+                    break;
+                case 's':
+                    this.controls.brake = true;
+                    break;
+                case ' ':
+                    this.controls.boost = true;
+                    e.preventDefault();
+                    break;
             }
         });
 
         document.addEventListener('keyup', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w': case 'arrowup': this.controls.forward = false; break;
-                case 's': case 'arrowdown': this.controls.backward = false; break;
-                case 'a': case 'arrowleft': this.controls.left = false; break;
-                case 'd': case 'arrowright': this.controls.right = false; break;
-                case ' ': this.controls.boost = false; break;
+                case 'arrowleft':
+                    this.controls.left = false;
+                    break;
+                case 'arrowright':
+                    this.controls.right = false;
+                    break;
+                case 'arrowup':
+                    this.controls.ascend = false;
+                    break;
+                case 'arrowdown':
+                    this.controls.descend = false;
+                    break;
+                case 'w':
+                    this.controls.accelerate = false;
+                    break;
+                case 's':
+                    this.controls.brake = false;
+                    break;
+                case ' ':
+                    this.controls.boost = false;
+                    break;
             }
         });
     }
@@ -226,9 +269,9 @@ class Rocket3D {
         // Acceleration
         const boostMultiplier = this.controls.boost ? 3 : 1;
 
-        if (this.controls.forward) {
+        if (this.controls.accelerate) {
             this.speed = Math.min(this.maxSpeed * boostMultiplier, this.speed + this.acceleration * delta * boostMultiplier);
-        } else if (this.controls.backward) {
+        } else if (this.controls.brake) {
             this.speed = Math.max(-this.maxSpeed * 0.3, this.speed - this.acceleration * delta);
         }
 
@@ -238,6 +281,19 @@ class Rocket3D {
         // Update velocity based on rotation
         this.velocity.x = -Math.sin(this.rotation) * this.speed * delta;
         this.velocity.z = -Math.cos(this.rotation) * this.speed * delta;
+
+        // Vertical movement (true 3D travel)
+        if (this.controls.ascend) {
+            this.verticalSpeed = Math.min(this.maxVerticalSpeed, this.verticalSpeed + this.verticalAcceleration * delta);
+        } else if (this.controls.descend) {
+            this.verticalSpeed = Math.max(-this.maxVerticalSpeed, this.verticalSpeed - this.verticalAcceleration * delta);
+        } else {
+            this.verticalSpeed *= this.verticalFriction;
+            if (Math.abs(this.verticalSpeed) < 0.5) {
+                this.verticalSpeed = 0;
+            }
+        }
+        this.velocity.y = this.verticalSpeed * delta;
 
         // Update position
         this.position.add(this.velocity);
@@ -249,7 +305,7 @@ class Rocket3D {
 
         // Update rocket light intensity based on thrust
         if (this.rocketLight) {
-            const isThrusting = this.controls.forward || this.controls.boost;
+            const isThrusting = this.controls.accelerate || this.controls.boost;
             this.rocketLight.intensity = isThrusting ? 2 + Math.random() * 0.5 : 0.2;
         }
     }
@@ -259,7 +315,7 @@ class Rocket3D {
 
         const positions = this.flameParticles.geometry.attributes.position.array;
         const colors = this.flameParticles.geometry.attributes.color.array;
-        const isThrusting = this.controls.forward || this.controls.boost;
+        const isThrusting = this.controls.accelerate || this.controls.boost;
 
         for (let i = 0; i < this.particleCount; i++) {
             this.particleLifetimes[i] -= delta * 3;
@@ -317,7 +373,7 @@ class Rocket3D {
         const distance = 50 + this.speed * 0.5;
         return new THREE.Vector3(
             -Math.sin(this.rotation) * distance,
-            0,
+            this.verticalSpeed * 0.6,
             -Math.cos(this.rotation) * distance
         );
     }
@@ -329,6 +385,7 @@ class Rocket3D {
         const offset = position.clone().normalize().multiplyScalar(100);
         this.position.add(offset);
         this.speed = 0;
+        this.verticalSpeed = 0;
         this.velocity.set(0, 0, 0);
     }
 
