@@ -1619,6 +1619,17 @@ body {
     opacity: 1;
 }
 
+
+.controls-title {
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: var(--hud-primary);
+    margin-bottom: 2px;
+}
+
 .control-item {
     font-size: 0.75rem;
     color: var(--star-white);
